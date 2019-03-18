@@ -60,7 +60,7 @@ React providers for [loggly-jslogger](https://www.npmjs.com/package/loggly-jslog
 
     const App = (props) = {
 
-      const { loggly, errorFormatter } = useContext(logglyContext);
+      const { errorFormatter, loggly } = useContext(logglyContext);
 
       // Note that loggly will be null if a token has not been configured
 
@@ -85,7 +85,7 @@ React providers for [loggly-jslogger](https://www.npmjs.com/package/loggly-jslog
 
       render() {
 
-        const { loggly, errorFormatter } = this.props;
+        const { errorFormatter, loggly } = this.props;
 
         // Note that loggly will be null if a token has not been configured
 
