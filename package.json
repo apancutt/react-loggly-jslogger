@@ -1,6 +1,6 @@
 {
   "name": "react-loggly-jslogger",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "React providers for loggly-jslogger using the Context API.",
   "keywords": [
     "react",
