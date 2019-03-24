@@ -1,6 +1,6 @@
 # react-loggly-jslogger
 
-React providers for [loggly-jslogger](https://www.npmjs.com/package/loggly-jslogger) using the [Context API](https://reactjs.org/docs/context.html).
+Thin wrapper for [loggly-jslogger](https://www.npmjs.com/package/loggly-jslogger) for use in React apps.
 
 ## Installation
 
@@ -28,56 +28,23 @@ React providers for [loggly-jslogger](https://www.npmjs.com/package/loggly-jslog
 
         ReactDOM.render(<App />, document.getElementById('root'));
 
-3. Access the context using either the `useLoggly()` hook (stateless components only) or the `withLoggly()` High-Order Component. The value provided will be either an instance of [LogglyTracker](https://www.loggly.com/docs/javascript/) or `null` if a token was not provided; useful for untracked environments.
+3. Import the instance into your components where required:
 
-## Examples
+        import React from 'react';
+        import loggly, { errorFormatter } from 'react-loggly-jslogger';
 
-### Usage with `useLoggly()` Hook ###
+        const App = (props) = {
 
-    import React from 'react';
-    import { useLoggly } from 'react-loggly-jslogger';
+          // Note that loggly will be null if a token has not been configured
 
-    const App = (props) = {
+          try {
+            throw new Error('Bang!');
+          } catch (err) {
+            loggly && loggly.push(errorFormatter(err));
+          }
 
-      const { errorFormatter, loggly } = useLoggly();
+          return <div>The error was sent to Loggly</div>;
 
-      // Note that loggly will be null if a token has not been configured
+        };
 
-      try {
-        throw new Error('Bang!');
-      } catch (err) {
-        loggly && loggly.push(errorFormatter(err));
-      }
-
-      return <div>The error was sent to Loggly</div>;
-
-    };
-
-    export default App;
-
-### Usage with `withLoggly()` High-Order Component
-
-    import React from 'react';
-    import { withLoggly } from 'react-loggly-jslogger';
-
-    class App extends Component {
-
-      render() {
-
-        const { errorFormatter, loggly } = this.props;
-
-        // Note that loggly will be null if a token has not been configured
-
-        try {
-          throw new Error('Bang!');
-        } catch (err) {
-          loggly && loggly.push(errorFormatter(err));
-        }
-
-        return <div>The error was sent to Loggly</div>;
-
-      }
-
-    }
-
-    export default withLoggly(App);
+        export default App;
