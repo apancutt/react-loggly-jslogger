@@ -1,4 +1,4 @@
-import React, { createContext } from 'react';
+import React, { createContext, useContext } from 'react';
 
 var errorFormatter = ((err, custom = {}) => ({
   file: err.fileName || err.filename,
@@ -219,11 +219,6 @@ var LogglyTracker = window.LogglyTracker;
 
 var loggly = process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN ? _LTracker : null;
 
-var LogglyContext = createContext({
-  errorFormatter,
-  loggly
-});
-
 const defaults = {
   logglyKey: process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN,
   sendConsoleErrors: true,
@@ -244,6 +239,13 @@ var init = ((config = {}) => {
 
   return loggly;
 });
+
+var LogglyContext = createContext({
+  errorFormatter,
+  loggly
+});
+
+const useLoggly = () => useContext(LogglyContext);
 
 function _extends() {
   _extends = Object.assign || function (target) {
@@ -271,4 +273,4 @@ const withLoggly = Component => props => React.createElement(LogglyContext.Consu
   errorFormatter: errorFormatter
 }, props)));
 
-export { LogglyContext as context, errorFormatter, init, loggly, withLoggly };
+export { errorFormatter, init, loggly, useLoggly, withLoggly };

@@ -226,11 +226,6 @@ var LogglyTracker = window.LogglyTracker;
 
 var loggly = process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN ? _LTracker : null;
 
-var LogglyContext = React.createContext({
-  errorFormatter,
-  loggly
-});
-
 const defaults = {
   logglyKey: process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN,
   sendConsoleErrors: true,
@@ -251,6 +246,13 @@ var init = ((config = {}) => {
 
   return loggly;
 });
+
+var LogglyContext = React.createContext({
+  errorFormatter,
+  loggly
+});
+
+const useLoggly = () => React.useContext(LogglyContext);
 
 function _extends() {
   _extends = Object.assign || function (target) {
@@ -278,8 +280,8 @@ const withLoggly = Component => props => React__default.createElement(LogglyCont
   errorFormatter: errorFormatter
 }, props)));
 
-exports.context = LogglyContext;
 exports.errorFormatter = errorFormatter;
 exports.init = init;
 exports.loggly = loggly;
+exports.useLoggly = useLoggly;
 exports.withLoggly = withLoggly;
