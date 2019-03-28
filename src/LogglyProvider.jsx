@@ -11,6 +11,10 @@ const defaults = {
 
 const log = (instance, level, data, providers) => {
 
+  if (!instance.key) {
+    return;
+  }
+
   if ('object' !== typeof data) {
     data = {
       data: JSON.stringify(data),
