@@ -1,14 +1,36 @@
 import React, { createContext, useContext } from 'react';
 
-var errorFormatter = ((err, custom = {}) => ({
-  file: err.fileName || err.filename,
-  line: err.lineNumber || err.lineno,
-  column: err.colno,
-  message: err.message,
-  stack: err.stack || (err.error ? err.error.stack : undefined),
-  url: window.location.href,
-  ...custom
-}));
+function _extends() {
+  _extends = Object.assign || function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+
+    return target;
+  };
+
+  return _extends.apply(this, arguments);
+}
+
+const context = createContext({
+  error: (err, data = {}) => {},
+  info: data => {},
+  instance: null,
+  providers: [],
+  warn: data => {}
+});
+const Consumer = context.Consumer;
+const Provider = context.Provider;
+const useLoggly = () => useContext(context);
+const withLoggly = Component => props => React.createElement(Consumer, null, loggly => React.createElement(Component, _extends({
+  loggly: loggly
+}, props)));
 
 (function (window, document) {
     var LOGGLY_INPUT_PREFIX = 'http' + (('https:' === document.location.protocol ? 's' : '')) + '://',
@@ -217,60 +239,78 @@ var errorFormatter = ((err, custom = {}) => ({
 var _LTracker = window._LTracker;
 var LogglyTracker = window.LogglyTracker;
 
-var loggly = process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN ? _LTracker : null;
-
 const defaults = {
   logglyKey: process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN,
   sendConsoleErrors: true,
   tag: process.env.REACT_APP_LOGGLY_TAG,
   useUtfEncoding: true
 };
-var init = ((config = {}) => {
-  if (loggly) {
-    const resolved = Object.assign({}, defaults, config); // Use our own implementation to ensure all errors are reported in the same format
 
-    if (resolved.sendConsoleErrors) {
-      resolved.sendConsoleErrors = false;
-      window.addEventListener('error', err => loggly.push(errorFormatter(err)));
-    }
-
-    loggly.push(resolved);
+const log = (instance, level, data, providers) => {
+  if ('object' !== typeof data) {
+    data = {
+      data: JSON.stringify(data)
+    };
   }
 
-  return loggly;
-});
+  data = Object.assign({}, data);
+  Object.keys(providers || {}).forEach(key => Object.assign(data, providers[key](instance, key, level, data) || {}));
+  instance.track({ ...data,
+    level
+  });
+};
 
-var LogglyContext = createContext({
-  errorFormatter,
-  loggly
-});
+const LogglyProvider = ({
+  children,
+  options,
+  providers
+}) => {
+  const instance = new LogglyTracker();
+  providers = providers || {};
 
-const useLoggly = () => useContext(LogglyContext);
+  providers.url = (instance, key, level, data) => ({
+    [key]: window.location.href
+  });
 
-function _extends() {
-  _extends = Object.assign || function (target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
+  providers.userAgent = (instance, key, level, data) => ({
+    [key]: window.navigator.userAgent
+  });
 
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-
-    return target;
+  const info = data => {
+    log(instance, 'info', data, providers);
   };
 
-  return _extends.apply(this, arguments);
-}
+  const warn = data => {
+    log(instance, 'warn', data, providers);
+  };
 
-const withLoggly = Component => props => React.createElement(LogglyContext.Consumer, null, ({
-  errorFormatter,
-  loggly
-}) => React.createElement(Component, _extends({
-  loggly: loggly,
-  errorFormatter: errorFormatter
-}, props)));
+  const error = (err, data = {}) => {
+    log(instance, 'error', { ...data,
+      file: err.fileName || err.filename,
+      line: err.lineNumber || err.lineno,
+      column: err.colno,
+      message: err.message,
+      stack: err.stack || (err.error ? err.error.stack : undefined)
+    }, providers);
+  };
 
-export { errorFormatter, init, loggly, useLoggly, withLoggly };
+  options = Object.assign({}, defaults, options); // Use our own implementation to ensure all errors are reported in the same format
+
+  if (options.sendConsoleErrors) {
+    options.sendConsoleErrors = false;
+    window.addEventListener('error', error);
+  }
+
+  instance.push(options);
+  return React.createElement(Provider, {
+    value: {
+      error,
+      info,
+      instance,
+      providers,
+      warn
+    }
+  }, children);
+};
+
+export { useLoggly, withLoggly, LogglyProvider };
