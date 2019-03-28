@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react';
 
-const context = createContext({ error: (err, data = {}) => {}, info: (data) => {}, instance: null, providers: [], warn: (data) => {} });
+const context = createContext({ error: (err, data = {}) => {}, info: (data) => {}, instance: null, providers: {}, warn: (data) => {} });
 export default context;
 
 export const Consumer = context.Consumer;
