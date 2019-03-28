@@ -29,7 +29,7 @@ const context = React.createContext({
   error: (err, data = {}) => {},
   info: data => {},
   instance: null,
-  providers: [],
+  providers: {},
   warn: data => {}
 });
 const Consumer = context.Consumer;

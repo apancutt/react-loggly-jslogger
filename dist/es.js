@@ -22,7 +22,7 @@ const context = createContext({
   error: (err, data = {}) => {},
   info: data => {},
   instance: null,
-  providers: [],
+  providers: {},
   warn: data => {}
 });
 const Consumer = context.Consumer;
