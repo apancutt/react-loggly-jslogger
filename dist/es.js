@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useRef, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useMemo, useCallback, useEffect } from 'react';
 import { LogglyTracker } from 'loggly-jslogger';
 
 function _extends() {
@@ -20,11 +20,11 @@ function _extends() {
 }
 
 const context = createContext({
-  error: (err, data = {}) => {},
-  info: data => {},
+  error: (err, data = {}, once = false) => {},
+  info: (data, once = false) => {},
   instance: null,
   providers: {},
-  warn: data => {}
+  warn: (data, once = false) => {}
 });
 const Consumer = context.Consumer;
 const Provider = context.Provider;
@@ -34,8 +34,9 @@ const withLoggly = Component => props => React.createElement(Consumer, null, log
 }, props)));
 
 let previous;
+const instance = new LogglyTracker();
 
-const logFn = (instance, level, data, providers, once = false) => {
+const logFn = (level, data, providers, once = false) => {
   if (!instance.key) {
     return;
   }
@@ -84,55 +85,45 @@ const LogglyProvider = ({
       [key]: window.navigator.userAgent
     })
   }), [providers]);
-  const instance = useRef(null);
   const info = useCallback((data, once = false) => {
-    if (instance.current) {
-      logFn(instance.current, 'info', data, providers, once);
-    }
+    logFn('info', data, providers, once);
   }, [providers]);
   const warn = useCallback((data, once = false) => {
-    if (instance.current) {
-      logFn(instance.current, 'warn', data, providers, once);
-    }
+    logFn('warn', data, providers, once);
   }, [providers]);
   const error = useCallback((err, data = {}, once = false) => {
-    if (instance.current) {
-      logFn(instance, 'error', { ...data,
-        file: err.fileName || err.filename,
-        line: err.lineNumber || err.lineno,
-        column: err.colno,
-        message: err.message,
-        stack: err.stack || (err.error ? err.error.stack : undefined)
-      }, providers, once);
-    }
+    logFn('error', { ...data,
+      file: err.fileName || err.filename,
+      line: err.lineNumber || err.lineno,
+      column: err.colno,
+      message: err.message,
+      stack: err.stack || (err.error ? err.error.stack : undefined)
+    }, providers, once);
   }, [providers]);
   const globalErrorHandler = useCallback(err => error(err, undefined, true), [error]);
   useEffect(() => {
-    instance.current = new LogglyTracker();
-    instance.current.push({ ...options,
+    instance.push({ ...options,
       sendConsoleErrors: false
-    }); // Use our own global error handler to ensure errors are always reported with the same structure
+    });
+
+    if (!options.sendConsoleErrors) {
+      return;
+    } // Use our own global error handler to ensure errors are always reported with the same structure
     // and repeated errors are only reported once
 
-    if (options.sendConsoleErrors) {
-      window.addEventListener('error', globalErrorHandler);
-    }
 
+    window.addEventListener('error', globalErrorHandler);
     return () => {
-      instance.current = null;
-
-      if (options.sendConsoleErrors) {
-        window.removeEventListener('error', globalErrorHandler);
-      }
+      window.removeEventListener('error', globalErrorHandler);
     };
   }, [globalErrorHandler, options]);
   return React.createElement(Provider, {
     value: {
       error,
       info,
+      instance,
       providers,
-      warn,
-      instance: instance.current
+      warn
     }
   }, children);
 };
