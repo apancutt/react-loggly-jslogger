@@ -1,10 +1,12 @@
 import { LogglyTracker } from 'loggly-jslogger';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Provider } from './contexts/loggly';
 
 let previous;
 
-const logFn = (instance, level, data, providers, once = false) => {
+const instance = new LogglyTracker();
+
+const logFn = (level, data, providers, once = false) => {
 
   if (!instance.key) {
     return;
@@ -53,64 +55,51 @@ const LogglyProvider = ({ children, options, providers }) => {
     userAgent: (instance, key, level, data) => ({ [key]: window.navigator.userAgent }),
   }), [ providers ]);
 
-  const instance = useRef(null);
-
   const info = useCallback((data, once = false) => {
-    if (instance.current) {
-      logFn(instance.current, 'info', data, providers, once);
-    }
+    logFn('info', data, providers, once);
   }, [ providers ]);
 
   const warn = useCallback((data, once = false) => {
-    if (instance.current) {
-      logFn(instance.current, 'warn', data, providers, once);
-    }
+    logFn('warn', data, providers, once);
   }, [ providers ]);
 
   const error = useCallback((err, data = {}, once = false) => {
-    if (instance.current) {
-      logFn(instance, 'error', {
-        ...data,
-        file: err.fileName || err.filename,
-        line: err.lineNumber || err.lineno,
-        column: err.colno,
-        message: err.message,
-        stack: err.stack || (err.error ? err.error.stack : undefined),
-      }, providers, once);
-    }
+    logFn('error', {
+      ...data,
+      file: err.fileName || err.filename,
+      line: err.lineNumber || err.lineno,
+      column: err.colno,
+      message: err.message,
+      stack: err.stack || (err.error ? err.error.stack : undefined),
+    }, providers, once);
   }, [ providers ]);
 
   const globalErrorHandler = useCallback((err) => error(err, undefined, true), [ error ]);
 
   useEffect(() => {
 
-    instance.current = new LogglyTracker();
-
-    instance.current.push({
+    instance.push({
       ...options,
       sendConsoleErrors: false,
     });
 
-    // Use our own global error handler to ensure errors are always reported with the same structure
-    // and repeated errors are only reported once
-    if (options.sendConsoleErrors) {
-      window.addEventListener('error', globalErrorHandler);
+    if (!options.sendConsoleErrors) {
+      return;
     }
 
+    // Use our own global error handler to ensure errors are always reported with the same structure
+    // and repeated errors are only reported once
+
+    window.addEventListener('error', globalErrorHandler);
+
     return () => {
-
-      instance.current = null;
-
-      if (options.sendConsoleErrors) {
-        window.removeEventListener('error', globalErrorHandler);
-      }
-
+      window.removeEventListener('error', globalErrorHandler);
     };
 
   }, [ globalErrorHandler, options ]);
 
   return (
-    <Provider value={{ error, info, providers, warn, instance: instance.current }}>
+    <Provider value={{ error, info, instance, providers, warn }}>
       {children}
     </Provider>
   );
