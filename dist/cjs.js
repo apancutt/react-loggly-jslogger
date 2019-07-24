@@ -40,14 +40,9 @@ const withLoggly = Component => props => React__default.createElement(Consumer, 
   loggly: loggly
 }, props)));
 
-const defaults = {
-  logglyKey: process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN,
-  sendConsoleErrors: true,
-  tag: process.env.REACT_APP_LOGGLY_TAG,
-  useUtfEncoding: true
-};
+let previous;
 
-const log = (instance, level, data, providers) => {
+const logFn = (instance, level, data, providers, once = false) => {
   if (!instance.key) {
     return;
   }
@@ -58,11 +53,22 @@ const log = (instance, level, data, providers) => {
     };
   }
 
-  data = Object.assign({}, data);
-  Object.keys(providers || {}).forEach(key => Object.assign(data, providers[key](instance, key, level, data) || {}));
-  instance.track({ ...data,
-    level
+  Object.entries(providers).forEach(([key, callback]) => {
+    data = { ...data,
+      ...callback(instance, key, level, data)
+    };
   });
+
+  if (!once || !previous || previous.data.column !== data.column || previous.data.file !== data.file || previous.data.line !== data.line || previous.data.message !== data.message || previous.level !== level) {
+    instance.track({ ...data,
+      level
+    });
+  }
+
+  previous = {
+    data,
+    level
+  };
 };
 
 const LogglyProvider = ({
@@ -70,50 +76,70 @@ const LogglyProvider = ({
   options,
   providers
 }) => {
-  const instance = new logglyJslogger.LogglyTracker();
-  providers = providers || {};
+  options = React.useMemo(() => ({
+    logglyKey: process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN,
+    sendConsoleErrors: true,
+    tag: process.env.REACT_APP_LOGGLY_TAG,
+    useUtfEncoding: true,
+    ...options
+  }), [options]);
+  providers = React.useMemo(() => ({ ...providers,
+    url: (instance, key, level, data) => ({
+      [key]: window.location.href
+    }),
+    userAgent: (instance, key, level, data) => ({
+      [key]: window.navigator.userAgent
+    })
+  }), [providers]);
+  const instance = React.useRef(null);
+  const info = React.useCallback((data, once = false) => {
+    if (instance.current) {
+      logFn(instance.current, 'info', data, providers, once);
+    }
+  }, [providers]);
+  const warn = React.useCallback((data, once = false) => {
+    if (instance.current) {
+      logFn(instance.current, 'warn', data, providers, once);
+    }
+  }, [providers]);
+  const error = React.useCallback((err, data = {}, once = false) => {
+    if (instance.current) {
+      logFn(instance, 'error', { ...data,
+        file: err.fileName || err.filename,
+        line: err.lineNumber || err.lineno,
+        column: err.colno,
+        message: err.message,
+        stack: err.stack || (err.error ? err.error.stack : undefined)
+      }, providers, once);
+    }
+  }, [providers]);
+  const globalErrorHandler = React.useCallback(err => error(err, undefined, true), [error]);
+  React.useEffect(() => {
+    instance.current = new logglyJslogger.LogglyTracker();
+    instance.current.push({ ...options,
+      sendConsoleErrors: false
+    }); // Use our own global error handler to ensure errors are always reported with the same structure
+    // and repeated errors are only reported once
 
-  providers.url = (instance, key, level, data) => ({
-    [key]: window.location.href
-  });
+    if (options.sendConsoleErrors) {
+      window.addEventListener('error', globalErrorHandler);
+    }
 
-  providers.userAgent = (instance, key, level, data) => ({
-    [key]: window.navigator.userAgent
-  });
+    return () => {
+      instance.current = null;
 
-  const info = data => {
-    log(instance, 'info', data, providers);
-  };
-
-  const warn = data => {
-    log(instance, 'warn', data, providers);
-  };
-
-  const error = (err, data = {}) => {
-    log(instance, 'error', { ...data,
-      file: err.fileName || err.filename,
-      line: err.lineNumber || err.lineno,
-      column: err.colno,
-      message: err.message,
-      stack: err.stack || (err.error ? err.error.stack : undefined)
-    }, providers);
-  };
-
-  options = Object.assign({}, defaults, options); // Use our own implementation to ensure all errors are reported in the same format
-
-  if (options.sendConsoleErrors) {
-    options.sendConsoleErrors = false;
-    window.addEventListener('error', error);
-  }
-
-  instance.push(options);
+      if (options.sendConsoleErrors) {
+        window.removeEventListener('error', globalErrorHandler);
+      }
+    };
+  }, [globalErrorHandler, options]);
   return React__default.createElement(Provider, {
     value: {
       error,
       info,
-      instance,
       providers,
-      warn
+      warn,
+      instance: instance.current
     }
   }, children);
 };

@@ -25,6 +25,7 @@
     "@babel/core": "7",
     "@babel/preset-react": "7",
     "react": "16",
+    "react-scripts": "3",
     "rollup": "1",
     "rollup-plugin-babel": "4",
     "rollup-plugin-commonjs": "10",
@@ -33,5 +34,8 @@
   "scripts": {
     "build": "rollup -c",
     "build:watch": "rollup -w -c"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
   }
 }
