@@ -36,7 +36,7 @@ const context = React.createContext({
 const Consumer = context.Consumer;
 const Provider = context.Provider;
 const useLoggly = () => React.useContext(context);
-const withLoggly = Component => props => React__default.createElement(Consumer, null, loggly => React__default.createElement(Component, _extends({
+const withLoggly = Component => props => /*#__PURE__*/React__default.createElement(Consumer, null, loggly => /*#__PURE__*/React__default.createElement(Component, _extends({
   loggly: loggly
 }, props)));
 
@@ -124,7 +124,7 @@ const LogglyProvider = ({
       window.removeEventListener('error', globalErrorHandler);
     };
   }, [globalErrorHandler, options]);
-  return React__default.createElement(Provider, {
+  return /*#__PURE__*/React__default.createElement(Provider, {
     value: {
       error,
       info,
