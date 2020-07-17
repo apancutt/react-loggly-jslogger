@@ -26,7 +26,7 @@ function _extends() {
   return _extends.apply(this, arguments);
 }
 
-const context = React.createContext({
+const context = /*#__PURE__*/React.createContext({
   error: (err, data = {}, once = false) => {},
   info: (data, once = false) => {},
   instance: null,

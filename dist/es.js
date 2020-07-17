@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useCallback, useEffect } from 'react';
+import React, { useContext, createContext, useMemo, useCallback, useEffect } from 'react';
 import { LogglyTracker } from 'loggly-jslogger';
 
 function _extends() {
@@ -19,7 +19,7 @@ function _extends() {
   return _extends.apply(this, arguments);
 }
 
-const context = createContext({
+const context = /*#__PURE__*/createContext({
   error: (err, data = {}, once = false) => {},
   info: (data, once = false) => {},
   instance: null,
