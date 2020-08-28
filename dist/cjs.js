@@ -2,29 +2,14 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
+var _extends = require('@babel/runtime/helpers/extends');
 var React = require('react');
-var React__default = _interopDefault(React);
 var logglyJslogger = require('loggly-jslogger');
 
-function _extends() {
-  _extends = Object.assign || function (target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
-      for (var key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-
-    return target;
-  };
-
-  return _extends.apply(this, arguments);
-}
+var _extends__default = /*#__PURE__*/_interopDefaultLegacy(_extends);
+var React__default = /*#__PURE__*/_interopDefaultLegacy(React);
 
 const context = /*#__PURE__*/React.createContext({
   error: (err, data = {}, once = false) => {},
@@ -36,7 +21,7 @@ const context = /*#__PURE__*/React.createContext({
 const Consumer = context.Consumer;
 const Provider = context.Provider;
 const useLoggly = () => React.useContext(context);
-const withLoggly = Component => props => /*#__PURE__*/React__default.createElement(Consumer, null, loggly => /*#__PURE__*/React__default.createElement(Component, _extends({
+const withLoggly = Component => props => /*#__PURE__*/React__default['default'].createElement(Consumer, null, loggly => /*#__PURE__*/React__default['default'].createElement(Component, _extends__default['default']({
   loggly: loggly
 }, props)));
 
@@ -124,7 +109,7 @@ const LogglyProvider = ({
       window.removeEventListener('error', globalErrorHandler);
     };
   }, [globalErrorHandler, options]);
-  return /*#__PURE__*/React__default.createElement(Provider, {
+  return /*#__PURE__*/React__default['default'].createElement(Provider, {
     value: {
       error,
       info,
