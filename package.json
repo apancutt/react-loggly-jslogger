@@ -34,6 +34,7 @@
     "rollup": "2"
   },
   "scripts": {
+    "eslint": "eslint src/**/*.js",
     "build": "rollup -c",
     "build:watch": "rollup -w -c"
   },
