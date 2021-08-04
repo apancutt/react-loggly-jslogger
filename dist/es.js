@@ -1,5 +1,5 @@
 import _extends from '@babel/runtime/helpers/extends';
-import React, { useContext, createContext, useMemo, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useMemo, useCallback, useEffect } from 'react';
 import { LogglyTracker } from 'loggly-jslogger';
 
 const context = /*#__PURE__*/createContext({
